@@ -1,15 +1,19 @@
 # Kubernetes Setup with Minikube and Kubectl
 
-This guide outlines the steps to set up a Kubernetes cluster using **Minikube** and **Kubectl**. It covers the basic layers of Kubernetes abstraction, essential commands, and CLI usage.
+This guide outlines the steps to set up a Kubernetes cluster using **Minikube** and **Kubectl**, covering the basic layers of Kubernetes abstraction, essential commands, and CLI usage.
+
+---
 
 ## Layers of Abstraction in Kubernetes
 
-The following are the layers of abstraction in Kubernetes, ordered from the highest to the lowest level:
+Kubernetes provides various layers of abstraction to manage containerized applications, arranged from highest to lowest level:
 
-- **Deployment**: Manages replicasets and ensures the desired number of pods are running.
-- **ReplicaSet**: Maintains a stable set of replica pods running at all times.
-- **Pods**: The smallest deployable units in Kubernetes, containing one or more containers.
-- **Containers**: Lightweight, encapsulated environments to run applications.
+- **Deployment**: Manages replica sets and ensures the desired number of pods are running.
+- **ReplicaSet**: Maintains a stable set of pod replicas at all times.
+- **Pods**: The smallest deployable units in Kubernetes, consisting of one or more containers.
+- **Containers**: Lightweight, encapsulated environments for running applications.
+
+---
 
 ## Prerequisites
 
@@ -23,35 +27,41 @@ brew install kubectl
 
 ### Verify Installation
 
-To check the installation location of **Minikube** and **Kubectl**, run:
+To check the installation of **Minikube** and **Kubectl**, run:
 
 ```bash
 file $(which minikube)
 file $(which kubectl)
 ```
 
+---
+
 ## CLI Tools Overview
 
 ### Kubectl CLI
-- Used to interact with and configure the Minikube cluster.
-- Enables the management of Kubernetes resources like pods, deployments, and services.
+
+- Interacts with and configures the Minikube cluster.
+- Manages Kubernetes resources like pods, deployments, and services.
 
 ### Minikube CLI
-- Used for managing the Minikube cluster (starting, stopping, deleting the cluster).
+
+- Manages the Minikube cluster (start, stop, delete).
 
 ---
 
 ## Basic Commands for Cluster Setup and Management
 
 ### 1. Start Minikube Kubernetes Cluster
-Minikube requires a virtual environment to run. You need to specify the hypervisor for Minikube to use. Here we are using Docker for containerization:
+
+Minikube requires a virtual environment to run. Here, we are using Docker for containerization:
 
 ```bash
 minikube start --vm-driver=docker
 ```
 
 ### 2. Check Nodes and Pods
-After starting the cluster, you can check the status of the nodes and pods using **kubectl**:
+
+After starting the cluster, check the status of nodes and pods using **kubectl**:
 
 ```bash
 kubectl get pods
@@ -59,18 +69,25 @@ kubectl get nodes
 ```
 
 ### 3. Check Cluster Status
-To check the status of your Minikube cluster, use:
+
+To check the status of your Minikube cluster:
 
 ```bash
 minikube status
 ```
 
-### 4. Terminal of application
+### 4. Access Application Terminal
+
+To access a terminal inside a pod:
+
 ```bash
- kubectl exec -it <POD-NAME> -- bin/bash
+kubectl exec -it <POD-NAME> -- bin/bash
 ```
+
+Example:
+
 ```bash
- kubectl exec -it mongo-depl-887485654-4xm8b -- bin/bash
+kubectl exec -it mongo-depl-887485654-4xm8b -- bin/bash
 ```
 
 ---
@@ -78,25 +95,27 @@ minikube status
 ## Working with Pods and Deployments
 
 ### 1. Create a Deployment
-Deployments manage pods, ensuring that the desired number of pods are running. To create a deployment:
+
+Deployments manage pods and ensure the desired number of pods are running. To create a deployment:
 
 ```bash
 kubectl create deployment <deployment-name> --image=<image-name>
 ```
 
-Example:
+Examples:
 
 ```bash
 kubectl create deployment nginx-depl --image=nginx
 kubectl create deployment mongo-depl --image=mongo
 ```
 
-For deleting
+To delete a deployment:
+
 ```bash
 kubectl delete deployment mongo-depl
 ```
 
-Check the deployment and pod status:
+Check the status of deployments and pods:
 
 ```bash
 kubectl get pods
@@ -104,21 +123,18 @@ kubectl get deployment
 ```
 
 ### 2. Check ReplicaSet
-The **ReplicaSet** ensures the specified number of pod replicas are running. To view the ReplicaSet managing your pods:
+
+The **ReplicaSet** ensures the correct number of pod replicas are running. View the ReplicaSet managing your pods:
 
 ```bash
 kubectl get replicaset
 ```
 
-### ReplicaSet and Pod Names
-- **Pod name**: `nginx-depl-85c9d7c5f4-ldx8q`
-- **ReplicaSet name**: `nginx-depl-85c9d7c5f4`
-
 ---
 
 ## Editing a Deployment Configuration
 
-You can modify the deployment configuration directly using the following command, which opens the configuration file for editing:
+You can modify a deployment’s configuration by editing its YAML file:
 
 ```bash
 kubectl edit deployment <deployment-name>
@@ -130,23 +146,29 @@ Example:
 kubectl edit deployment nginx-depl
 ```
 
-## Using Config file for deployment
+---
 
-1. To apple config file
+## Working with Configuration Files
+
+### 1. Apply a Configuration File
+
+To apply a Kubernetes configuration file:
 
 ```bash
-kubectl apply -f config-file.yaml
+kubectl apply -f <config-file.yaml>
 ```
-Eg:
+
+Example:
+
 ```bash
 kubectl apply -f nginx-deployment.yaml
 ```
 
-### Config file for Deployment:
-- `template` is the config file for a pods
-- `template.spec` is the blueprint for a pod, which
+### 2. Example Config File for Deployment
 
-```bash
+The following YAML file defines a basic **nginx** deployment:
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -169,3 +191,91 @@ spec:
           ports:
             - containerPort: 80
 ```
+
+### 3. Example Config File for Service
+
+This YAML file defines a **Service** for the **nginx** deployment:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+```
+
+### 4. Example Config File for MongoDB Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+  labels:
+    app: mongodb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:1.27.1
+          ports:
+            - containerPort: 27017
+```
+
+---
+
+## Managing Secrets
+
+### 1. Creating a Secret
+
+Secrets are stored in base64 format. To encode a string into base64:
+
+```bash
+echo -n 'username' | base64
+```
+
+### 2. Example Config File for Secret
+
+This YAML file creates a secret for MongoDB credentials:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-secrets
+type: Opaque
+data:
+  mongo-root-username: base64-username
+  mongo-root-password: base64-password
+```
+
+---
+
+## Retrieving Additional Information
+
+To retrieve the detailed YAML for a deployment:
+
+```bash
+kubectl get deployment <deployment-name> -o yaml > <output-file.yaml>
+```
+
+Example:
+
+```bash
+kubectl get deployment nginx-deployment -o yaml > nginx-deployment-result.yaml
+```
+
