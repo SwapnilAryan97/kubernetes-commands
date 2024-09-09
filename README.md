@@ -195,6 +195,10 @@ spec:
 ### 3. Example Config File for Service
 
 This YAML file defines a **Service** for the **nginx** deployment:
+- **selector:** to connect pod through label
+- **ports:**
+  - **port:** service port
+  - **targetPort:** containerPort of deployment
 
 ```yaml
 apiVersion: v1
@@ -259,10 +263,15 @@ metadata:
   name: mongo-secrets
 type: Opaque
 data:
-  mongo-root-username: base64-username
-  mongo-root-password: base64-password
+  mongo-root-username: <base64-username>
+  mongo-root-password: <base64-password>
 ```
 
+### 3. Apply the Secret
+
+```bash
+kubectl apply -f mongo-secrets.yaml
+```
 ---
 
 ## Retrieving Additional Information
