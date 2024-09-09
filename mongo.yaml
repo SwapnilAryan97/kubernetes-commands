@@ -5,7 +5,7 @@ metadata:
   labels:
     app: mongodb
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: mongodb
@@ -42,7 +42,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-service
+  name: mongo
 spec:
   selector:
     app: mongodb
