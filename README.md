@@ -1,23 +1,37 @@
 # Kubernetes Setup with Minikube and Kubectl
 
-This guide outlines the steps to set up a Kubernetes cluster using **Minikube** and **Kubectl**, covering the basic layers of Kubernetes abstraction, essential commands, and CLI usage.
+This guide provides a step-by-step walkthrough for setting up a Kubernetes cluster using **Minikube** and **Kubectl**. It covers Kubernetes abstraction layers, essential commands, and CLI usage.
 
 ---
 
-## Layers of Abstraction in Kubernetes
+## Table of Contents
+1. [Kubernetes Layers of Abstraction](#layers-of-abstraction)
+2. [Prerequisites](#prerequisites)
+3. [CLI Tools Overview](#cli-tools-overview)
+4. [Cluster Setup and Basic Commands](#basic-commands)
+5. [Working with Pods and Deployments](#working-with-pods-and-deployments)
+6. [Editing Deployments](#editing-deployments)
+7. [Managing Configuration Files](#managing-configuration-files)
+8. [Managing Secrets](#managing-secrets)
+9. [Retrieving Deployment Information](#retrieving-information)
+10. [Mongo Express Setup](#mongo-express-setup)
+11. [Mongo Express Service](#mongo-express-service)
 
-Kubernetes provides various layers of abstraction to manage containerized applications, arranged from highest to lowest level:
+---
 
-- **Deployment**: Manages replica sets and ensures the desired number of pods are running.
+## 1. Kubernetes Layers of Abstraction <a name="layers-of-abstraction"></a>
+
+Kubernetes provides multiple layers of abstraction to manage containerized applications, organized from the highest to the lowest level:
+- **Deployment**: Manages replica sets and ensures a defined number of pods are running.
 - **ReplicaSet**: Maintains a stable set of pod replicas at all times.
-- **Pods**: The smallest deployable units in Kubernetes, consisting of one or more containers.
+- **Pods**: The smallest deployable unit, consisting of one or more containers.
 - **Containers**: Lightweight, encapsulated environments for running applications.
 
 ---
 
-## Prerequisites
+## 2. Prerequisites <a name="prerequisites"></a>
 
-Ensure that your system is updated and that **Minikube** and **Kubectl** are installed:
+Ensure **Minikube** and **Kubectl** are installed on your system.
 
 ```bash
 brew update
@@ -27,7 +41,7 @@ brew install kubectl
 
 ### Verify Installation
 
-To check the installation of **Minikube** and **Kubectl**, run:
+Check if **Minikube** and **Kubectl** are installed correctly:
 
 ```bash
 file $(which minikube)
@@ -36,24 +50,18 @@ file $(which kubectl)
 
 ---
 
-## CLI Tools Overview
+## 3. CLI Tools Overview <a name="cli-tools-overview"></a>
 
-### Kubectl CLI
-
-- Interacts with and configures the Minikube cluster.
-- Manages Kubernetes resources like pods, deployments, and services.
-
-### Minikube CLI
-
-- Manages the Minikube cluster (start, stop, delete).
+- **Kubectl CLI**: Interacts with and configures the Minikube cluster, managing resources like pods, deployments, and services.
+- **Minikube CLI**: Manages the Minikube cluster (start, stop, delete).
 
 ---
 
-## Basic Commands for Cluster Setup and Management
+## 4. Cluster Setup and Basic Commands <a name="basic-commands"></a>
 
-### 1. Start Minikube Kubernetes Cluster
+### 1. Start Minikube Cluster
 
-Minikube requires a virtual environment to run. Here, we are using Docker for containerization:
+Minikube requires a virtualization environment like Docker to run.
 
 ```bash
 minikube start --vm-driver=docker
@@ -61,42 +69,42 @@ minikube start --vm-driver=docker
 
 ### 2. Check Nodes and Pods
 
-After starting the cluster, check the status of nodes and pods using **kubectl**:
+After starting the cluster, verify the status of nodes and pods:
 
 ```bash
-kubectl get pods
 kubectl get nodes
+kubectl get pods
 ```
 
-### 3. Check Cluster Status
+### 3. Cluster Status
 
-To check the status of your Minikube cluster:
+Check the status of your Minikube cluster:
 
 ```bash
 minikube status
 ```
 
-### 4. Access Application Terminal
+### 4. Access a Pod's Terminal
 
-To access a terminal inside a pod:
+To access a terminal within a pod:
 
 ```bash
-kubectl exec -it <POD-NAME> -- bin/bash
+kubectl exec -it <POD-NAME> -- /bin/bash
 ```
 
 Example:
 
 ```bash
-kubectl exec -it mongo-depl-887485654-4xm8b -- bin/bash
+kubectl exec -it mongo-depl-887485654-4xm8b -- /bin/bash
 ```
 
 ---
 
-## Working with Pods and Deployments
+## 5. Working with Pods and Deployments <a name="working-with-pods-and-deployments"></a>
 
 ### 1. Create a Deployment
 
-Deployments manage pods and ensure the desired number of pods are running. To create a deployment:
+To create a deployment that ensures a certain number of pods are running:
 
 ```bash
 kubectl create deployment <deployment-name> --image=<image-name>
@@ -115,16 +123,18 @@ To delete a deployment:
 kubectl delete deployment mongo-depl
 ```
 
-Check the status of deployments and pods:
+### 2. View Deployments and Pods
+
+Check the status of your deployments and pods:
 
 ```bash
-kubectl get pods
 kubectl get deployment
+kubectl get pods
 ```
 
-### 2. Check ReplicaSet
+### 3. Check ReplicaSet
 
-The **ReplicaSet** ensures the correct number of pod replicas are running. View the ReplicaSet managing your pods:
+View the ReplicaSet managing your pods:
 
 ```bash
 kubectl get replicaset
@@ -132,7 +142,7 @@ kubectl get replicaset
 
 ---
 
-## Editing a Deployment Configuration
+## 6. Editing Deployments <a name="editing-deployments"></a>
 
 You can modify a deployment’s configuration by editing its YAML file:
 
@@ -148,11 +158,11 @@ kubectl edit deployment nginx-depl
 
 ---
 
-## Working with Configuration Files
+## 7. Managing Configuration Files <a name="managing-configuration-files"></a>
 
 ### 1. Apply a Configuration File
 
-To apply a Kubernetes configuration file:
+To apply a configuration file:
 
 ```bash
 kubectl apply -f <config-file.yaml>
@@ -164,9 +174,7 @@ Example:
 kubectl apply -f nginx-deployment.yaml
 ```
 
-### 2. Example Config File for Deployment
-
-The following YAML file defines a basic **nginx** deployment:
+### 2. Example NGINX Deployment YAML
 
 ```yaml
 apiVersion: apps/v1
@@ -192,13 +200,9 @@ spec:
             - containerPort: 80
 ```
 
-### 3. Example Config File for Service
+### 3. Example NGINX Service YAML
 
-This YAML file defines a **Service** for the **nginx** deployment:
-- **selector:** to connect pod through label
-- **ports:**
-  - **port:** service port
-  - **targetPort:** containerPort of deployment
+This file defines a **Service** for NGINX:
 
 ```yaml
 apiVersion: v1
@@ -214,7 +218,7 @@ spec:
       targetPort: 8080
 ```
 
-### 4. Example Config File for MongoDB Deployment
+### 4. Example MongoDB Deployment YAML
 
 ```yaml
 apiVersion: apps/v1
@@ -242,19 +246,17 @@ spec:
 
 ---
 
-## Managing Secrets
+## 8. Managing Secrets <a name="managing-secrets"></a>
 
-### 1. Creating a Secret
+### 1. Create a Secret
 
-Secrets are stored in base64 format. To encode a string into base64:
+Encode strings into base64 for Kubernetes secrets:
 
 ```bash
 echo -n 'username' | base64
 ```
 
-### 2. Example Config File for Secret
-
-This YAML file creates a secret for MongoDB credentials:
+### 2. Example MongoDB Secret YAML
 
 ```yaml
 apiVersion: v1
@@ -272,11 +274,12 @@ data:
 ```bash
 kubectl apply -f mongo-secrets.yaml
 ```
+
 ---
 
-## Retrieving Additional Information
+## 9. Retrieving Deployment Information <a name="retrieving-information"></a>
 
-To retrieve the detailed YAML for a deployment:
+To retrieve and output the YAML of an existing deployment:
 
 ```bash
 kubectl get deployment <deployment-name> -o yaml > <output-file.yaml>
@@ -288,3 +291,39 @@ Example:
 kubectl get deployment nginx-deployment -o yaml > nginx-deployment-result.yaml
 ```
 
+---
+
+## 10. Mongo Express Setup <a name="mongo-express-setup"></a>
+
+To access Mongo Express via Minikube, run:
+
+```bash
+minikube service mongo-express-service
+```
+
+Optional login credentials:
+- **Username**: `admin`
+- **Password**: `pass`
+
+
+## 10. Mongo Express Service <a name="mongo-express-service"></a>
+- **nodePort:** External traffic can access the service using the node's IP address and the specified port.
+
+- **Note:**
+  - Service layer itself is a loadbalancer, the type could be `LoadBalancer`, which automatically provisions an external load balancer in supported cloud environments. This type of service exposes the application to external traffic by assigning a public IP address.
+
+```bash
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+spec:
+  selector:
+    app: mongo-express
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8081  # The port that the service will expose
+      targetPort: 8081 # The port on the container that the service will forward traffic to
+      nodePort: 30000  # The port on each node that will be exposed
+```

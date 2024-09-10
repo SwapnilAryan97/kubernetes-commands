@@ -35,7 +35,28 @@ spec:
                 configMapKeyRef:
                   name: mongodb-configmap
                   key: database_url
+            - name: ME_CONFIG_BASICAUTH_USER
+              value: admin  # Set your desired basic auth username here
+            - name: ME_CONFIG_BASICAUTH_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: mongo-express-password  # Ensure this key exists in your secret
           resources:
             limits:
               cpu: "0.5"
               memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+spec:
+  selector:
+    app: mongo-express
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+      nodePort: 30000
