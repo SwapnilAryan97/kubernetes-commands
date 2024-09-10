@@ -16,6 +16,8 @@ This guide provides a step-by-step walkthrough for setting up a Kubernetes clust
 9. [Retrieving Deployment Information](#retrieving-information)
 10. [Mongo Express Setup](#mongo-express-setup)
 11. [Mongo Express Service](#mongo-express-service)
+12. [Namespace](#namespace)
+13. [Ingress](#ingress)
 
 ---
 
@@ -305,14 +307,14 @@ Optional login credentials:
 - **Username**: `admin`
 - **Password**: `pass`
 
+---
 
-## 10. Mongo Express Service <a name="mongo-express-service"></a>
+## 11. Mongo Express Service <a name="mongo-express-service"></a>
+
 - **nodePort:** External traffic can access the service using the node's IP address and the specified port.
+- **Note:** Service layer itself is a loadbalancer. The type could be `LoadBalancer`, which automatically provisions an external load balancer in supported cloud environments. This type of service exposes the application to external traffic by assigning a public IP address.
 
-- **Note:**
-  - Service layer itself is a loadbalancer, the type could be `LoadBalancer`, which automatically provisions an external load balancer in supported cloud environments. This type of service exposes the application to external traffic by assigning a public IP address.
-
-```bash
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -327,3 +329,192 @@ spec:
       targetPort: 8081 # The port on the container that the service will forward traffic to
       nodePort: 30000  # The port on each node that will be exposed
 ```
+
+---
+
+## 12. Namespace <a name="namespace"></a>
+
+A **namespace** in Kubernetes is a way to divide cluster resources between multiple users or teams. It helps organize and isolate resources like pods, services, and deployments within the same cluster.
+
+### Default Namespaces:
+1. **default**: The default namespace for resources with no specific namespace.
+2. **kube-system**: Used for Kubernetes system components like the API server, controller manager, etc.
+3. **kube-public**: A readable namespace for everyone, often used for public resources.
+4. **kube-node-lease**: Holds objects used for node heartbeat tracking in the cluster.
+
+Namespaces help manage resources and permissions within large clusters.
+
+CLI commands: 
+
+1. Cluster info
+
+```bash
+kubectl cluster-info
+```
+
+2. Create namespace
+
+```bash
+kubectl create namespace <name>
+```
+
+### kubens
+
+`kubens` is a command-line tool that helps you easily switch between Kubernetes namespaces. It simplifies namespace management by allowing you to quickly view and switch the active namespace for your current `kubectl` context. 
+
+In Kubernetes, you often need to work with multiple namespaces (e.g., for development, staging, production), and by default, `kubectl` commands are executed in the `default` namespace unless you specify otherwise using `-n <namespace>`. `kubens` makes switching between namespaces more convenient.
+
+### Key Features:
+1. **Switching Namespaces**: Easily switch the current active namespace.
+2. **Listing Namespaces**: List all available namespaces in the current Kubernetes context.
+3. **Integration with `kubectl`**: Automatically updates the current namespace for `kubectl` commands.
+
+### How to Use `kubens`:
+
+1. **Install `kubens`**:
+   You can install `kubens` using a package manager like `brew` (for macOS), or download it manually:
+   
+   ```bash
+   brew install kubectx
+   ```
+
+   `kubens` comes bundled with `kubectx` (a tool to switch between Kubernetes contexts), so they are installed together.
+
+2. **Switch Namespace**:
+   To switch to a specific namespace:
+   
+   ```bash
+   kubens <namespace-name>
+   ```
+
+   Example:
+   ```bash
+   kubens my-namespace
+   ```
+
+3. **List Namespaces**:
+   To list all available namespaces in the current Kubernetes context:
+   
+   ```bash
+   kubens
+   ```
+
+4. **Current Namespace**:
+   When you switch namespaces using `kubens`, it updates the active namespace for all future `kubectl` commands, so you don't need to specify the `-n <namespace>` option.
+
+### Example Workflow:
+
+```bash
+# List all namespaces
+kubens
+
+# Switch to a namespace
+kubens my-namespace
+
+# After switching, any kubectl command will run in the selected namespace
+kubectl get pods
+```
+
+### Why Use `kubens`?
+
+- **Convenience**: Simplifies the process of switching between namespaces without needing to manually specify `-n <namespace>` for each `kubectl` command.
+- **Productivity**: Speeds up workflows when working with multiple namespaces frequently.
+  
+In summary, `kubens` is a handy tool that enhances your Kubernetes namespace management, making it easy to navigate and switch between namespaces quickly.
+
+---
+
+## 13. Ingress <a name="ingress"></a>
+
+In Kubernetes, an **Ingress** is an API object that manages external access to services within a cluster, typically via HTTP or HTTPS. It acts as a gateway to route traffic from the outside world into your cluster and can handle things like load balancing, SSL termination, and name-based virtual hosting.
+
+### Key Features of Ingress:
+1. **Routing**: Ingress can route traffic to different services based on URL paths or domains.
+2. **SSL/TLS**: Supports HTTPS by managing SSL certificates.
+3. **Load Balancing**: Can distribute traffic to different service backends.
+4. **Host and Path-Based Routing**: Ingress allows routing based on domain names (hostnames) or URL paths.
+
+### Example Ingress Configuration:
+
+Let’s assume you have two services in your Kubernetes cluster:
+1. **frontend-service** serving the user interface.
+2. **auth-service** handling authentication.
+
+You want:
+- Traffic to `example.com` to go to the **frontend-service**.
+- Traffic to `example.com/auth` to be routed to the **auth-service**.
+
+This is achieved using an Ingress.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8000
+```
+
+### Use Cases for Ingress:
+
+1. **Host-Based Routing**: Route traffic to different services based on the host (domain name).
+   - Example: `foo.example.com` goes to **service A**, while `bar.example.com` goes to **service B**.
+
+2. **Path-Based Routing**: Route traffic based on URL paths within the same domain.
+   - Example: Requests to `/api` go to **service A**, while `/auth` goes to **service B**.
+
+3. **TLS/SSL Termination**: Ingress can handle HTTPS by using TLS certificates for secure communication.
+   - You can add certificates to the Ingress definition using the `tls` section.
+
+### Example with TLS:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-ingress
+spec:
+  tls:
+  - hosts:
+    - example.com
+    secretName: tls-secret # The secret containing the TLS certificate
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8000
+```
+
+---
